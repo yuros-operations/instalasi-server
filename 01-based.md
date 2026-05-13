@@ -1,4 +1,228 @@
+## 1. partitioning
+### physical layout nvme0n1
+| disk | partition | type              | luks  | lvm   | label    | size      | format | mount                      |
+| ---- | --------- | ----------------- | ----- | ----- | -------- | --------- | ------ | -------------------------- |
+| 0    | 1         | efi               | false | false | boot     | 2.5G      | fat 32 | /boot                      |
+| 0    | 2         | linux server data | true  | false | keys     | 512M      | luks   | none                       |
+| 0    | 3         | linux file system | true  | true  | proc     | 50G       | luks   | see logical volume proc    |
+| 0    | 4         | linux server data | true  | true  | pond     | 100% Free | luks   | see logical volume pond    |
 
+### physical layout sda 
+
+| disk | partition | type              | luks  | lvm   | label    | size      | format | mount                      |
+| ---- | --------- | ----------------- | ----- | ----- | -------- | --------- | ------ | -------------------------- |
+| 1    | 1         | linux file system | true  | true  | -        | 5 G       | -      | -                          |
+| 1    | 2         | linux server data | true  | true  | cave     | 100% Free | luks   | see logical volume cave    |
+
+### logical volume layout nvme0n1
+
+#### logical volume proc
+| partition | list | group  | name | size   | mount                | format |
+| --------- | ----- | ------ | ---- | ------ | --------------------- | --------|
+| 3         | 1     | proc   | root | 10G    | /mnt                  | xfs     |
+| 3         | 2     | proc   | vars | 10G    | /mnt/var              | xfs     |
+| 3         | 3     | proc   | vlog | 1.5G   | /mnt/var/log/         | xfs     |
+| 3         | 4     | proc   | vaud | 1G     | /mnt/var/log/audit    | xfs     |
+| 3         | 5     | proc   | vtmp | 2.5G   | /mnt/var/tmp/         | xfs     |
+| 3         | 6     | proc   | vpac | 3G     | /mnt/var/cache/pacman | xfs     |
+| 3         | 7     | proc   | swap | 4G     | swapon                | swap    |
+
+#### logical volume pond
+| partition | list  | group  | name | size    | mount                  | format  |
+| --------- | ----- | ------ | ---- | -------- | ----------------------- | --------|
+| 4         | 1     | pond   | home | 1G       | /mnt/home               | xfs     |
+| 4         | 2     | pond   | srvc | 512M     | /mnt/srv                | xfs     |
+| 4         | 2     | pond   | pods | 50%free  | /mnt/var/lib/containers | xfs     |
+
+###### reng
+```
+sudo cryptsetup luksFormat --type luks2 \
+    --align-payload 4096 \
+    --sector-size 4096 \
+    --label "reng" \
+    /dev/nvme0n1p2
+```
+###### proc
+```
+sudo cryptsetup luksFormat --type luks2 \
+    --align-payload 4096 \
+    --sector-size 4096 \
+    --label "proc" \
+    /dev/nvme0n1p3
+```
+```
+sudo cryptsetup open /dev/nvme0n1p3 proc \
+    --perf-no_read_workqueue \
+    --perf-no_write_workqueue \
+    --persistent
+```
+```
+pvcreate --dataalignment 4096 /dev/mapper/proc
+```
+```
+vgcreate proc /dev/mapper/proc
+```
+###### pond
+```
+sudo cryptsetup luksFormat --type luks2 \
+    --align-payload 4096 \
+    --sector-size 4096 \
+    --label "pond" \
+    /dev/nvme0n1p4
+```
+```
+sudo cryptsetup open /dev/nvme0n1p4 pond \
+    --perf-no_read_workqueue \
+    --perf-no_write_workqueue \
+    --persistent
+```
+```
+pvcreate --dataalignment 4096 /dev/mapper/pond
+```
+```
+vgcreate pond /dev/mapper/pond
+```
+
+##### root partition
+```
+lvcreate -L 10G proc -n root
+```
+```
+mkfs.xfs -s size=4096 /dev/proc/root
+```
+```
+mount /dev/proc/root /mnt
+```
+##### boot
+```
+mkdir /mnt/boot
+```
+```
+mount -o uid=0,gid=0,fmask=0077,dmask=0077 /dev/nvme0n1p1 /mnt/boot
+```
+
+##### vars partition
+```
+lvcreate -L 10G proc -n vars
+```
+```
+mkfs.xfs -s size=4096 /dev/proc/vars
+```
+```
+mkdir /mnt/var
+```
+```
+mount -o rw,nodev,noexec,nosuid,relatime /dev/proc/vars /mnt/var
+```
+
+##### vlog partition
+```
+lvcreate -L 1.5G proc -n vlog
+```
+```
+sudo mkfs.xfs -s size=4096 /dev/proc/vlog
+```
+```
+mkdir /mnt/var/log
+```
+```
+mount -o rw,nodev,noexec,nosuid,relatime /dev/proc/vlog /mnt/var/log
+```
+
+##### vaud partition
+```
+lvcreate -L 512M proc -n vaud
+```
+```
+mkfs.xfs -s size=4096 /dev/proc/vaud
+```
+```
+mkdir /mnt/var/log/audit
+```
+```
+mount -o rw,nodev,noexec,nosuid,relatime /dev/proc/vaud /mnt/var/log/audit
+```
+##### vtmp partition
+```
+lvcreate -L 2.5G proc -n vtmp
+```
+```
+mkfs.xfs -s size=4096 /dev/proc/vtmp
+```
+```
+mkdir /mnt/var/tmp
+```
+```
+mount -o rw,nodev,noexec,nosuid,relatime /dev/proc/vtmp /mnt/var/tmp
+```
+
+##### vpac partition
+```
+lvcreate -L 3G proc -n vpac
+```
+```
+mkfs.xfs -s size=4096 /dev/proc/vpac
+```
+```
+mkdir -p /mnt/var/cache/pacman
+```
+```
+mount -o rw,nodev,noexec,nosuid,relatime /dev/proc/vpac /mnt/var/cache/pacman
+```
+
+##### swap partition
+```
+lvcreate -L 10G proc -n swap
+```
+```
+mkswap /dev/proc/swap
+```
+```
+swapon /dev/proc/swap
+```
+
+##### home partition
+```
+lvcreate -L 1G pond -n home
+```
+```
+mkfs.xfs -s size=4096 /dev/pond/home
+```
+```
+mkdir /mnt/home
+```
+```
+mount -o rw,nodev,noexec,nosuid,relatime /dev/pond/home /mnt/home
+```
+
+##### srvc partition
+```
+lvcreate -L 512M pond -n srvc
+```
+```
+mkfs.xfs -s size=4096 /dev/pond/srvc
+```
+
+```
+mkdir -p /mnt/srv/http
+```
+```
+mount -o rw,nodev,noexec,nosuid,relatime /dev/pond/srvc /mnt/srv/http
+```
+
+##### host partition
+```
+lvcreate -l50%free pond -n pods
+```
+```
+mkfs.xfs -s size=4096 /dev/pond/host
+```
+```
+mkdir -p /mnt/var/lib/containers
+```
+```
+mount -o rw,nodev,noexec,nosuid,relatime /dev/pond/host /mnt/var/lib/containers
+```
 
 ## 2. Instalation
 ### intel server
