@@ -210,7 +210,7 @@ mkdir -p /mnt/srv/http
 mount -o rw,nodev,noexec,nosuid,relatime /dev/pond/srvc /mnt/srv/http
 ```
 
-##### host partition
+##### pods partition
 ```
 lvcreate -l50%free pond -n pods
 ```
