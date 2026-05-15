@@ -227,7 +227,7 @@ mount -o rw,nodev,noexec,nosuid,relatime /dev/pond/host /mnt/var/lib/containers
 ## 2. Instalation
 ### intel server
 ```
-pacstrap /mnt linux-hardened linux-hardened-headers clevis luksmeta tpm2-tools scx-scheds linux-firmware-realtek linux-firmware-intel linux-firmware-other mkinitcpio intel-ucode libpwquality git base neovim lvm2 openssh ethtool iptables-nft firewalld apparmor rsync sudo debugedit fakeroot pkgconf bison gcc pcre flex wget make gcc curl tuned irqbalance which xfsprogs podman --noconfirm
+pacstrap /mnt linux-lts linux-lts-headers clevis luksmeta tpm2-tools scx-scheds linux-firmware-realtek linux-firmware-intel linux-firmware-other mkinitcpio intel-ucode libpwquality git base neovim lvm2 openssh ethtool iptables-nft firewalld apparmor rsync sudo debugedit fakeroot pkgconf bison gcc pcre flex wget make gcc curl tuned irqbalance which xfsprogs podman --noconfirm
 ```
 
 ### network configuration
@@ -847,32 +847,32 @@ HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole sd-enc
 #### configure linux preset
 
 ```
-cp /etc/mkinitcpio.d/linux-hardened.preset /etc/mkinitcpio.d/linux-hardened.preset.bak 
+cp /etc/mkinitcpio.d/linux-lts.preset /etc/mkinitcpio.d/linux-lts.preset.bak 
 ```
 ```
-echo '' > /etc/mkinitcpio.d/linux-hardened.preset
+echo '' > /etc/mkinitcpio.d/linux-lts.preset
 ```
 ```
-nvim /etc/mkinitcpio.d/linux-hardened.preset
+nvim /etc/mkinitcpio.d/linux-lts.preset
 ```
 ```
-# mkinitcpio preset file for the 'linux-hardened' package
+# mkinitcpio preset file for the 'linux-lts' package
 
 ALL_config="/etc/mkinitcpio.d/default.conf"
-ALL_kver="/boot/kernel/vmlinuz-linux-hardened"
-ALL_kerneldest="/boot/kernel/vmlinuz-linux-hardened"
+ALL_kver="/boot/kernel/vmlinuz-linux-lts"
+ALL_kerneldest="/boot/kernel/vmlinuz-linux-lts"
 
 PRESETS=('default')
 #PRESETS=('default' 'fallback')
 
 #default_config="/etc/mkinitcpio.conf"
-#default_image="/boot/initramfs-linux-hardened.img"
-default_uki="/boot/efi/linux/blackbird-hardened.efi"
+#default_image="/boot/initramfs-linux-lts.img"
+default_uki="/boot/efi/linux/blackbird-lts.efi"
 #default_options="--splash /usr/share/systemd/bootctl/splash-arch.bmp"
 
 #fallback_config="/etc/mkinitcpio.conf"
-#fallback_image="/boot/initramfs-linux-hardened-fallback.img"
-#fallback_uki="/efi/EFI/Linux/arch-linux-hardened-fallback.efi"
+#fallback_image="/boot/initramfs-linux-lts-fallback.img"
+#fallback_uki="/efi/EFI/Linux/arch-linux-lts-fallback.efi"
 #fallback_options="-S autodetect"
 ```
 ```
