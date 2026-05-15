@@ -12,7 +12,7 @@
 | disk | partition | type              | luks  | lvm   | label    | size      | format | mount                      |
 | ---- | --------- | ----------------- | ----- | ----- | -------- | --------- | ------ | -------------------------- |
 | 1    | 1         | linux file system | true  | true  | -        | 5 G       | -      | -                          |
-| 1    | 2         | linux server data | true  | true  | cave     | 100% Free | luks   | see logical volume cave    |
+| 1    | 2         | linux server data | true  | true  | cave     | 100% Free | lvm   | see logical volume cave    |
 
 ### logical volume layout nvme0n1
 
