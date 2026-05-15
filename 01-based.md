@@ -131,7 +131,7 @@ mount -o rw,nodev,noexec,nosuid,relatime /dev/proc/vlog /mnt/var/log
 
 ##### vaud partition
 ```
-lvcreate -L 512M proc -n vaud
+lvcreate -L 1G proc -n vaud
 ```
 ```
 mkfs.xfs -s size=4096 /dev/proc/vaud
@@ -172,7 +172,7 @@ mount -o rw,nodev,noexec,nosuid,relatime /dev/proc/vpac /mnt/var/cache/pacman
 
 ##### swap partition
 ```
-lvcreate -L 10G proc -n swap
+lvcreate -L 4G proc -n swap
 ```
 ```
 mkswap /dev/proc/swap
